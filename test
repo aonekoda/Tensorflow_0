@@ -1,0 +1,259 @@
+# 텍스트 데이터 전처리
+
+딥러닝을 위한 텍스트 데이터를 준비하는 방법
+
+딥러닝 모형에서는 텍스트를 수치로 변환하여 처리해야 한다.
+
+원시 텍스트(raw text)를 딥러닝 모델에 직접 공급할 수 없다.
+
+텍스트 데이터는 기계 학습 및 심층 학습 모델의 입력 또는 출력으로 사용할 숫자로 인코딩되어야 한다.
+
+
+* 텍스트 데이터를 빠르게 준비하는 데 사용할 수있는 편리한 방법.
+* BoW(Bag of Word)
+* Tokenizer API
+
+# BoW(Bag of Word)
+
+텍스트나 단어를 사용하기 전에 수치 형태로 변환하는 전처리 과정을 거쳐야 한다. 텍스트를 수치 벡터로 표현하는 방법으로 BoW가 있다.
+
+1. 전체 문서를 고유한 token으로 변환한다.
+2. 특정 문서에서 각 단어가 얼마나 자주 등장하는지 세어서 문서의 특성 벡터를 생성한다. 
+
+import numpy as np
+from sklearn.feature_extraction.text import CountVectorizer
+
+count = CountVectorizer()
+docs = np.array([
+        'The sun is shining',
+        'The weather is sweet',
+        'The sun is shining, the weather is sweet, and one and one is two'])
+bag = count.fit_transform(docs)
+
+### CountVectorizer
+
+CountVectorizer는 이러한 작업을 하기 위한 다음과 같은 인수를 가질 수 있다.
+
+* stop_words : 문자열 {‘english’}, 리스트 또는 None (디폴트)
+* stop words 목록.‘english’이면 영어용 스탑 워드 사용.
+* analyzer : 문자열 {‘word’, ‘char’, ‘char_wb’} 또는 함수
+단어 n-그램, 문자 n-그램, 단어 내의 문자 n-그램
+* token_pattern : string
+토큰 정의용 정규 표현식
+* tokenizer : 함수 또는 None (디폴트)
+토큰 생성 함수 .
+* ngram_range : (min_n, max_n) 튜플
+n-그램 범위
+* max_df : 정수 또는 [0.0, 1.0] 사이의 실수. 디폴트 1
+단어장에 포함되기 위한 최대 빈도
+* min_df : 정수 또는 [0.0, 1.0] 사이의 실수. 디폴트 1
+단어장에 포함되기 위한 최소 빈도
+
+어휘 사전의 내용을 출력해 보면 다음과 같다.
+
+print(count.vocabulary_)
+
+print(bag.toarray())
+
+# RNN을 위한 텍스트 데이터 전처리
+
+RNN에서 텍스트 데이터 전처리는 BoW와는 달리 고유한 단어의 집합만 관심 대상이고 부수적으로 생성된 단어의 빈도는 필요하지 않다.
+
+
+1. text_to_word_sequence로 단어를 분할합니다.
+2. one_hot으로 인코딩합니다.
+3. hashing_trick을 사용한 해시 인코딩.
+4. Tokenizer API
+
+### text_to_word_sequence로 단어 분할
+
+텍스트로 작업 할 때 첫 번째 단계는 텍스트를 단어로 나누는 것이다.  
+단어를 토큰(Token)이라고하며 텍스트를 토큰으로 분할하는 과정을 토큰 화(Tokenizer)라고 한다.
+
+` text_to_word_sequence () 함수 `는 다음의 작업을 자동으로 수행한다.
+
+* 공백으로 단어를 분할합니다 (split =”“).
+* 구두점을 필터링합니다 (filters = '!”# $ % & () * +,-. / :; <=>? @ [\\] ^ _`{|} ~ \ t \ n').
+* 텍스트를 소문자로 변환합니다 (lower = True)
+
+
+
+from tensorflow.keras.preprocessing.text import text_to_word_sequence
+# define the document
+text = 'The quick brown fox jumped over the lazy dog.'
+
+# tokenize the document
+result = text_to_word_sequence(text)
+print(result)
+
+### one_hot으로 인코딩
+
+`one_hot () 함수 `  
+* 텍스트 문서를 한 번에 토큰 화하고 정수 인코딩하는 데 사용한다. 
+* 이 함수는 문서의 정수로 인코딩 된 버전을 반환한다.
+* text_to_word_sequence () 함수와 마찬가지로 one_hot () 함수는 텍스트를 소문자로 만들고 구두점을 필터링하며 공백을 기준으로 단어를 분할한다.
+
+
+from tensorflow.keras.preprocessing.text import text_to_word_sequence
+# define the document
+text = 'The quick brown fox jumped over the lazy dog.'
+# estimate the size of the vocabulary
+words = set(text_to_word_sequence(text))
+vocab_size = len(words)
+print(vocab_size)
+
+from tensorflow.keras.preprocessing.text import one_hot
+from tensorflow.keras.preprocessing.text import text_to_word_sequence
+# define the document
+text = 'The quick brown fox jumped over the lazy dog.'
+
+# estimate the size of the vocabulary
+words = set(text_to_word_sequence(text))
+vocab_size = len(words)
+print(vocab_size)
+# integer encode the document
+result = one_hot(text, round(vocab_size*1.3))
+print(result)
+
+print(text,'\n',text_to_word_sequence(text))
+
+### hashing_trick을 사용한 해시 인코딩
+
+`hashing_trick () 함수`  
+* one_hot() 함수 처럼 문서를 토큰 화 한 다음 정수 인코딩하는 함수이다.
+
+from tensorflow.keras.preprocessing.text import hashing_trick
+from tensorflow.keras.preprocessing.text import text_to_word_sequence
+# define the document
+text = 'The quick brown fox jumped over the lazy dog.'
+
+# estimate the size of the vocabulary
+words = set(text_to_word_sequence(text))
+vocab_size = len(words)
+print(vocab_size)
+# integer encode the document
+result = hashing_trick(text, round(vocab_size*1.3))
+print(result)
+
+### Tokenizer API
+여러 텍스트 문서를 준비하는 데 적합하고 재사용 할 수있는 텍스트를 준비하기위한보다 정교한 API를 제공한다.
+ 
+`Tokenizer 클래스`  참고) https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer  
+Tokenizer는 문서에 대해 학습 한 내용을 쿼리하는 데 사용할 수있는 4 가지 속성을 제공한다.
+
+* word_counts : 단어 사전 및 개수.
+* word_docs : 단어 사전 및 각 단어가 등장하는 문서 수.
+* word_index : 단어 사전과 고유하게 할당 된 정수입니다.
+* document_count : Tokenizer에 맞게 사용 된 총 문서 수의 정수 수입니다.
+
+from tensorflow.keras.preprocessing.text import Tokenizer
+# define 5 documents
+docs = ['Well done!',
+        'Good work',
+        'Great effort',
+        'nice work',
+        'Excellent!']
+# create the tokenizer
+t = Tokenizer()
+# fit the tokenizer on the documents
+t.fit_on_texts(docs)
+
+?Tokenizer()
+
+# summarize what was learned
+print(t.word_counts)
+print(t.document_count)
+print(t.word_index)
+print(t.word_docs)
+
+`texts_to_matrix () 함수`  
+
+* Tokenizer의 `texts_to_matrix () 함수`를 사용하여 입력 제공되는 문서 당 하나의 벡터를 만들 수 있다. 
+* 벡터의 길이는 어휘의 총 크기이다.
+* 표준 bag-of-words 모델 텍스트 인코딩 체계 모음을 제공
+    - ' binary ': 문서에 각 단어가 있는지 여부. 이것이 기본값입니다.
+    - ' count ': 문서에있는 각 단어의 개수입니다.
+    - ' tfidf ': 문서의 각 단어에 대한 텍스트 빈도 역 문서 빈도 (TF-IDF) 점수입니다.
+    - ' freq ': 각 문서 내에서 단어의 비율로서 각 단어의 빈도.
+
+# integer encode documents
+encoded_docs = t.texts_to_matrix(docs, mode='count')
+print(encoded_docs)
+
+# Load Text
+
+서로 다른 작가가 호머의 일리아드를 영어로 번역한 3개의 텍스트를 읽어 들여 적절하게 데이터 전처리를 수행하고 데이터 셋으로 생성한다.
+
+import tensorflow as tf
+print(tf.__version__)
+
+#import tensorflow_datasets as tfds
+import os
+
+### Text 파일 준비하기
+
+호머의 일리아드를 영어로 번역한 3개의 텍스트를 사용한다.
+
+#DIRECTORY_URL = 'https://storage.googleapis.com/download.tensorflow.org/data/illiad/'
+DIRECTORY_URL = os.environ['USERPROFILE'] + '\\.keras\\datasets'
+FILE_NAMES = ['cowper.txt', 'derby.txt', 'butler.txt']
+
+for name in FILE_NAMES:
+    text_dir = tf.keras.utils.get_file(name, origin=DIRECTORY_URL+name)
+
+parent_dir = os.path.dirname(text_dir)
+
+parent_dir
+
+3개의 텍스트 파일을 읽어들여 하나의 데이터셋으로 만든다.
+
+data = []     # 텍스트
+labels = []   # labels 0=cowper, 1=derby, 2=butler
+for i, file_name in enumerate(FILE_NAMES):
+    with open(os.path.join(parent_dir, file_name)) as f:
+        lines = f.readlines()
+        cls = [i] * len(lines)
+        data.extend(lines) 
+        labels.extend(cls)
+
+data[0], labels[0]
+
+### Tokenizer
+
+from tensorflow.keras.preprocessing.text import Tokenizer
+
+def tokenize(lang):
+    lang_tokenizer = Tokenizer()
+    lang_tokenizer.fit_on_texts(lang)
+
+    tensor = lang_tokenizer.texts_to_sequences(lang)
+
+    tensor = tf.keras.preprocessing.sequence.pad_sequences(tensor,
+                                                         padding='post')
+
+    return tensor, lang_tokenizer
+
+tensor, tokenizer = tokenize(data)
+
+tensor[0]
+
+def convert(lang, tensor):
+    for t in tensor:
+        if t!=0:
+            print ("%d ----> %s" % (t, lang.index_word[t]))
+
+convert(tokenizer, tensor[0])
+
+##  tf.data 데이터 세트 만들기
+
+BUFFER_SIZE = len(tensor)
+BATCH_SIZE = 64
+vocab_size = len(tokenizer.word_index)
+
+print(vocab_size)
+
+dataset = tf.data.Dataset.from_tensor_slices((tensor, labels)).shuffle(BUFFER_SIZE)
+dataset = dataset.batch(BATCH_SIZE, drop_remainder=True)
+
+next(iter(dataset))
+
