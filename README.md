@@ -5,18 +5,18 @@
 1. GPU disable
 ```
   import os
-	os.environ['cuda_visible_devices'] = '-1'
+  os.environ['cuda_visible_devices'] = '-1'
 ```
 2. GPU 설정 변경
 ```
-	gpus = tf.config.experimental.list_physical_devices('GPU')
-	if gpus :
-    	    tf.config.experimental.set_memory_growth(gpus[0], True)
+  gpus = tf.config.experimental.list_physical_devices('GPU')
+  if gpus :
+      tf.config.experimental.set_memory_growth(gpus[0], True)
 ```
 3. GPU 환경변수 설정
 ```
-	import os
-	os.eviron['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+  import os
+  os.eviron['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 ```
 
 
